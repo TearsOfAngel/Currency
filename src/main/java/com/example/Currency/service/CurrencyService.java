@@ -32,6 +32,7 @@ public class CurrencyService {
             List<String[]> records = csvReader.readAll();
 
             DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+            //TODO: we must return max gain and loss. Not a value. Fix me later
             double maxUsdGain = Double.MIN_VALUE;
             double maxUsdLoss = Double.MAX_VALUE;
             double maxEurGain = Double.MIN_VALUE;
