@@ -1,7 +1,6 @@
 package com.example.Currency.service;
 
 import com.example.Currency.dto.CurrencyData;
-import com.example.Currency.dto.responses.DataResponse;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
 import org.jfree.chart.ChartFactory;
@@ -9,7 +8,6 @@ import org.jfree.chart.ChartUtils;
 import org.jfree.chart.JFreeChart;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.springframework.stereotype.Service;
-import org.springframework.ui.Model;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -19,13 +17,13 @@ import java.io.Reader;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Service
 public class CurrencyService {
 
-    public DataResponse processCsv(MultipartFile file) {
-        DataResponse dataResponse = new DataResponse();
+    public List<CurrencyData> processCsv(MultipartFile file) {
 
         try (Reader reader = new InputStreamReader(file.getInputStream())) {
             CSVReader csvReader = new CSVReader(reader);
@@ -39,8 +37,6 @@ public class CurrencyService {
             double maxEurLoss = Double.MAX_VALUE;
 
             List<CurrencyData> currencyDataList = parseCSV(records);
-            //TODO: fix response. It must be only list.
-            dataResponse.setCurrencyDataList(currencyDataList);
             for (CurrencyData data : currencyDataList) {
                 dataset.addValue(data.getUsd(), "USD", data.getDate().toString());
                 dataset.addValue(data.getEur(), "EUR", data.getDate().toString());
@@ -56,10 +52,10 @@ public class CurrencyService {
             System.out.println(maxUsdLoss);
             System.out.println(maxEurGain);
             System.out.println(maxEurLoss);
-            return dataResponse;
+            return currencyDataList;
         } catch (IOException | CsvException e) {
             e.printStackTrace();
-            return new DataResponse();
+            return Collections.emptyList();
         }
     }
 
