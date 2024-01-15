@@ -28,24 +28,19 @@ public class CurrencyService {
         try (Reader reader = new InputStreamReader(file.getInputStream())) {
             CSVReader csvReader = new CSVReader(reader);
             List<String[]> records = csvReader.readAll();
-
             DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-            //TODO: we must return max gain and loss. Not a value. Fix me later
-            double maxUsdGain = Double.MIN_VALUE;
-            double maxUsdLoss = Double.MAX_VALUE;
-            double maxEurGain = Double.MIN_VALUE;
-            double maxEurLoss = Double.MAX_VALUE;
 
             List<CurrencyData> currencyDataList = parseCSV(records);
             for (CurrencyData data : currencyDataList) {
                 dataset.addValue(data.getUsd(), "USD", data.getDate().toString());
                 dataset.addValue(data.getEur(), "EUR", data.getDate().toString());
-
-                maxUsdGain = Math.max(maxUsdGain, data.getUsd());
-                maxUsdLoss = Math.min(maxUsdLoss, data.getUsd());
-                maxEurGain = Math.max(maxEurGain, data.getEur());
-                maxEurLoss = Math.min(maxEurLoss, data.getEur());
             }
+
+            double maxUsdLoss = findMaxLoss(currencyDataList, "USD");
+            double maxUsdGain = findMaxGain(currencyDataList, "USD");
+            double maxEurLoss = findMaxLoss(currencyDataList, "EUR");
+            double maxEurGain = findMaxGain(currencyDataList, "EUR");
+
             generateChart(dataset, "Currency Exchange Rates");
 
             System.out.println(maxUsdGain);
@@ -101,5 +96,34 @@ public class CurrencyService {
         }
 
         return currencyDataList;
+    }
+
+    private double findMaxLoss(List<CurrencyData> data, String currency) {
+        double maxLoss = 0.0;
+
+        for (int i = 1; i < data.size(); i++) {
+            double currentDayValue = getValue(data.get(i), currency);
+            double previousDayValue = getValue(data.get(i - 1), currency);
+            double loss = previousDayValue - currentDayValue;
+            maxLoss = Math.max(maxLoss, loss);
+        }
+        return maxLoss;
+    }
+
+    private double findMaxGain(List<CurrencyData> data, String currency) {
+        double maxGain = 0.0;
+
+        for (int i = 1; i < data.size(); i++) {
+            double currentDayValue = getValue(data.get(i), currency);
+            double previousDayValue = getValue(data.get(i - 1), currency);
+            double gain = currentDayValue - previousDayValue;
+            maxGain = Math.max(maxGain, gain);
+        }
+
+        return maxGain;
+    }
+
+    private double getValue(CurrencyData data, String currency) {
+        return "USD".equals(currency) ? data.getUsd() : data.getEur();
     }
 }
