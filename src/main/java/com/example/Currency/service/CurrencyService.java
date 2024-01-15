@@ -1,6 +1,7 @@
 package com.example.Currency.service;
 
 import com.example.Currency.dto.CurrencyData;
+import com.example.Currency.dto.GainAndLossData;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
 import org.jfree.chart.ChartFactory;
@@ -36,10 +37,10 @@ public class CurrencyService {
                 dataset.addValue(data.getEur(), "EUR", data.getDate().toString());
             }
 
-            double maxUsdLoss = findMaxLoss(currencyDataList, "USD");
-            double maxUsdGain = findMaxGain(currencyDataList, "USD");
-            double maxEurLoss = findMaxLoss(currencyDataList, "EUR");
-            double maxEurGain = findMaxGain(currencyDataList, "EUR");
+            GainAndLossData maxUsdLoss = findMaxLoss(currencyDataList, "USD");
+            GainAndLossData maxUsdGain = findMaxGain(currencyDataList, "USD");
+            GainAndLossData maxEurLoss = findMaxLoss(currencyDataList, "EUR");
+            GainAndLossData maxEurGain = findMaxGain(currencyDataList, "EUR");
 
             generateChart(dataset, "Currency Exchange Rates");
 
@@ -98,32 +99,67 @@ public class CurrencyService {
         return currencyDataList;
     }
 
-    private double findMaxLoss(List<CurrencyData> data, String currency) {
-        double maxLoss = 0.0;
+    //TODO: Подумать над тем чтобы возвращать отрицательные числа. Сейчас возвращается просто объект из которого не понятно подъем это или падение.
+    public GainAndLossData findMaxLoss(List<CurrencyData> data, String currency) {
+        double maxLoss = Double.MIN_VALUE;
+        LocalDate maxLossDate = null;
+        GainAndLossData lossDTO = new GainAndLossData();
 
         for (int i = 1; i < data.size(); i++) {
             double currentDayValue = getValue(data.get(i), currency);
             double previousDayValue = getValue(data.get(i - 1), currency);
             double loss = previousDayValue - currentDayValue;
-            maxLoss = Math.max(maxLoss, loss);
+
+            if (loss > maxLoss) {
+                maxLoss = loss;
+                maxLossDate = data.get(i).getDate();
+            }
         }
-        return maxLoss;
+
+        lossDTO.setCurrency(currency);
+        lossDTO.setValue(roundTo4Decimals(maxLoss));
+        lossDTO.setDate(maxLossDate);
+
+        if (maxLossDate != null) {
+            return lossDTO;
+        } else {
+            return null;
+        }
     }
 
-    private double findMaxGain(List<CurrencyData> data, String currency) {
+    private GainAndLossData findMaxGain(List<CurrencyData> data, String currency) {
         double maxGain = 0.0;
+        LocalDate maxGainDate = null;
+        GainAndLossData gainDTO = new GainAndLossData();
 
         for (int i = 1; i < data.size(); i++) {
             double currentDayValue = getValue(data.get(i), currency);
             double previousDayValue = getValue(data.get(i - 1), currency);
             double gain = currentDayValue - previousDayValue;
-            maxGain = Math.max(maxGain, gain);
+
+            if (gain > maxGain) {
+                maxGain = gain;
+                maxGainDate = data.get(i).getDate();
+
+            }
         }
 
-        return maxGain;
+        gainDTO.setCurrency(currency);
+        gainDTO.setValue(roundTo4Decimals(maxGain));
+        gainDTO.setDate(maxGainDate);
+
+        if (maxGainDate != null) {
+            return gainDTO;
+        } else {
+            return null;
+        }
     }
 
     private double getValue(CurrencyData data, String currency) {
         return "USD".equals(currency) ? data.getUsd() : data.getEur();
+    }
+
+    private double roundTo4Decimals(double value) {
+        return Math.round(value * 10000.0) / 10000.0;
     }
 }
