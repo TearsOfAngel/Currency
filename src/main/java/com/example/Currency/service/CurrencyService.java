@@ -19,6 +19,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -44,10 +45,12 @@ public class CurrencyService {
 
             generateChart(dataset, "Currency Exchange Rates");
 
+            //TODO: delete me later
             System.out.println(maxUsdGain);
             System.out.println(maxUsdLoss);
             System.out.println(maxEurGain);
             System.out.println(maxEurLoss);
+
             return currencyDataList;
         } catch (IOException | CsvException e) {
             e.printStackTrace();
@@ -55,7 +58,7 @@ public class CurrencyService {
         }
     }
 
-    private String generateChart(DefaultCategoryDataset dataset, String title) {
+    private void generateChart(DefaultCategoryDataset dataset, String title) {
         JFreeChart lineChart = ChartFactory.createLineChart(
                 title,
                 "Date",
@@ -66,10 +69,8 @@ public class CurrencyService {
         try {
             File chartFile = new File("src/main/resources/static/images/chart.png");
             ChartUtils.saveChartAsPNG(chartFile, lineChart, 1000, 800);
-            return chartFile.getName();
         } catch (IOException e) {
             e.printStackTrace();
-            return null;
         }
     }
 
@@ -91,6 +92,7 @@ public class CurrencyService {
                 currencyData.setEur(eur);
 
                 currencyDataList.add(currencyData);
+                currencyDataList.sort(Comparator.comparing(CurrencyData::getDate));
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -99,7 +101,6 @@ public class CurrencyService {
         return currencyDataList;
     }
 
-    //TODO: Подумать над тем чтобы возвращать отрицательные числа. Сейчас возвращается просто объект из которого не понятно подъем это или падение.
     public GainAndLossData findMaxLoss(List<CurrencyData> data, String currency) {
         double maxLoss = Double.MIN_VALUE;
         LocalDate maxLossDate = null;
@@ -108,9 +109,9 @@ public class CurrencyService {
         for (int i = 1; i < data.size(); i++) {
             double currentDayValue = getValue(data.get(i), currency);
             double previousDayValue = getValue(data.get(i - 1), currency);
-            double loss = previousDayValue - currentDayValue;
+            double loss = currentDayValue - previousDayValue;
 
-            if (loss > maxLoss) {
+            if (loss < maxLoss) {
                 maxLoss = loss;
                 maxLossDate = data.get(i).getDate();
             }
@@ -140,7 +141,6 @@ public class CurrencyService {
             if (gain > maxGain) {
                 maxGain = gain;
                 maxGainDate = data.get(i).getDate();
-
             }
         }
 
