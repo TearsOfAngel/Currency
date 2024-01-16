@@ -22,12 +22,14 @@ import java.util.*;
 @Service
 public class CurrencyService {
 
-    public List<CurrencyData> processCsv(MultipartFile file) {
+    public Map<String, List<Object>> processCsv(MultipartFile file) {
 
         try (Reader reader = new InputStreamReader(file.getInputStream())) {
             CSVReader csvReader = new CSVReader(reader);
             List<String[]> records = csvReader.readAll();
             DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+            Map<String, List<Object>> responseMap = new HashMap<>();
+            List<GainAndLossData> gainAndLossDataList = new ArrayList<>();
 
             List<CurrencyData> currencyDataList = parseCSV(records);
             for (CurrencyData data : currencyDataList) {
@@ -42,19 +44,17 @@ public class CurrencyService {
 
             generateChart(dataset, "Currency Exchange Rates");
 
-            //TODO: delete me later
-            System.out.println(maxUsdGain);
-            System.out.println(maxUsdLoss);
-            System.out.println(maxEurGain);
-            System.out.println(maxEurLoss);
+            gainAndLossDataList.add(maxUsdGain);
+            gainAndLossDataList.add(maxUsdLoss);
+            gainAndLossDataList.add(maxEurGain);
+            gainAndLossDataList.add(maxEurLoss);
 
-            //TODO: In the end we must return JSON like:
-            // currencyData: [list of CurrencyData]
-            // gainsAndLosses: [list of GainAndLossData]
-            return currencyDataList;
+            responseMap.put("dataFromCsv", new ArrayList<>(currencyDataList));
+            responseMap.put("gainsAndLosses", new ArrayList<>(gainAndLossDataList));
+            return responseMap;
         } catch (IOException | CsvException e) {
             e.printStackTrace();
-            return Collections.emptyList();
+            return Collections.emptyMap();
         }
     }
 
