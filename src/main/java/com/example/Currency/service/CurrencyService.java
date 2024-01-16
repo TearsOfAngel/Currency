@@ -17,10 +17,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 @Service
 public class CurrencyService {
@@ -51,6 +48,9 @@ public class CurrencyService {
             System.out.println(maxEurGain);
             System.out.println(maxEurLoss);
 
+            //TODO: In the end we must return JSON like:
+            // currencyData: [list of CurrencyData]
+            // gainsAndLosses: [list of GainAndLossData]
             return currencyDataList;
         } catch (IOException | CsvException e) {
             e.printStackTrace();

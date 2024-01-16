@@ -10,34 +10,5 @@
     <input type="file" name="file" accept=".csv" required/>
     <button type="submit">Upload</button>
 </form>
-
-<div th:if="${currencyDataList}">
-    <h3>Data:</h3>
-    <table border="1">
-        <thead>
-        <tr>
-            <th>Date</th>
-            <th>USD</th>
-            <th>EUR</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr th:each="data : ${currencyDataList}">
-            <td th:text="${data.date}"></td>
-            <td th:text="${data.usd}"></td>
-            <td th:text="${data.eur}"></td>
-        </tr>
-        </tbody>
-    </table>
-
-    <h3>Charts:</h3>
-    <img id="chartImage" th:src="@{/images/chart.png}" alt="Currency Exchange Rates"/>
-
-    <h3>Maximum Gain/Loss:</h3>
-    <p>Max USD Gain: <span th:text="${maxUsdGain}"></span></p>
-    <p>Max USD Loss: <span th:text="${maxUsdLoss}"></span></p>
-    <p>Max EUR Gain: <span th:text="${maxEurGain}"></span></p>
-    <p>Max EUR Loss: <span th:text="${maxEurLoss}"></span></p>
-</div>
 </body>
 </html>
