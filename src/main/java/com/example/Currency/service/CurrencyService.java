@@ -2,6 +2,7 @@ package com.example.Currency.service;
 
 import com.example.Currency.dto.CurrencyData;
 import com.example.Currency.dto.GainAndLossData;
+import com.example.Currency.dto.ResponseData;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
 import org.jfree.chart.ChartFactory;
@@ -22,59 +23,26 @@ import java.util.*;
 @Service
 public class CurrencyService {
 
-    public Map<String, List<Object>> processCsv(MultipartFile file) {
-
+    public ResponseData processCsv(MultipartFile file) {
         try (Reader reader = new InputStreamReader(file.getInputStream())) {
             CSVReader csvReader = new CSVReader(reader);
             List<String[]> records = csvReader.readAll();
-            DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-            Map<String, List<Object>> responseMap = new HashMap<>();
-            List<GainAndLossData> gainAndLossDataList = new ArrayList<>();
 
             List<CurrencyData> currencyDataList = parseCSV(records);
-            for (CurrencyData data : currencyDataList) {
-                dataset.addValue(data.getUsd(), "USD", data.getDate().toString());
-                dataset.addValue(data.getEur(), "EUR", data.getDate().toString());
-            }
+            generateChartAndCreateImg(currencyDataList);
 
-            GainAndLossData maxUsdLoss = findMaxLoss(currencyDataList, "USD");
-            GainAndLossData maxUsdGain = findMaxGain(currencyDataList, "USD");
-            GainAndLossData maxEurLoss = findMaxLoss(currencyDataList, "EUR");
-            GainAndLossData maxEurGain = findMaxGain(currencyDataList, "EUR");
+            ResponseData responseData = new ResponseData();
+            responseData.setGainAndLossData(findGainsAndLosses(currencyDataList));
+            responseData.setCurrencyData(currencyDataList);
 
-            generateChart(dataset, "Currency Exchange Rates");
-
-            gainAndLossDataList.add(maxUsdGain);
-            gainAndLossDataList.add(maxUsdLoss);
-            gainAndLossDataList.add(maxEurGain);
-            gainAndLossDataList.add(maxEurLoss);
-
-            responseMap.put("dataFromCsv", new ArrayList<>(currencyDataList));
-            responseMap.put("gainsAndLosses", new ArrayList<>(gainAndLossDataList));
-            return responseMap;
+            return responseData;
         } catch (IOException | CsvException e) {
             e.printStackTrace();
-            return Collections.emptyMap();
+            return new ResponseData();
         }
     }
 
-    private void generateChart(DefaultCategoryDataset dataset, String title) {
-        JFreeChart lineChart = ChartFactory.createLineChart(
-                title,
-                "Date",
-                "Exchange Rate",
-                dataset
-        );
-
-        try {
-            File chartFile = new File("src/main/resources/static/images/chart.png");
-            ChartUtils.saveChartAsPNG(chartFile, lineChart, 1000, 800);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private List<CurrencyData> parseCSV (List < String[]>records){
+    private List<CurrencyData> parseCSV(List<String[]> records) {
         List<CurrencyData> currencyDataList = new ArrayList<>();
 
         for (int i = 1; i < records.size(); i++) {
@@ -99,6 +67,50 @@ public class CurrencyService {
         }
 
         return currencyDataList;
+    }
+
+    private void generateChartAndCreateImg(List<CurrencyData> currencyDataList) {
+        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+        for (CurrencyData data : currencyDataList) {
+            dataset.addValue(data.getUsd(), "USD", data.getDate().toString());
+            dataset.addValue(data.getEur(), "EUR", data.getDate().toString());
+        }
+
+
+        generateChart(dataset, "Currency Exchange Rates");
+    }
+
+    private void generateChart(DefaultCategoryDataset dataset, String title) {
+        JFreeChart lineChart = ChartFactory.createLineChart(
+                title,
+                "Date",
+                "Exchange Rate",
+                dataset
+        );
+
+        try {
+            File chartFile = new File("src/main/resources/static/images/chart.png");
+            ChartUtils.saveChartAsPNG(chartFile, lineChart, 1000, 800);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private List<GainAndLossData> findGainsAndLosses(List<CurrencyData> currencyDataList) {
+        GainAndLossData maxUsdLoss = findMaxLoss(currencyDataList, "USD");
+        GainAndLossData maxUsdGain = findMaxGain(currencyDataList, "USD");
+        GainAndLossData maxEurLoss = findMaxLoss(currencyDataList, "EUR");
+        GainAndLossData maxEurGain = findMaxGain(currencyDataList, "EUR");
+
+        List<GainAndLossData> gainAndLossDataList = new ArrayList<>();
+
+        gainAndLossDataList.add(maxUsdGain);
+        gainAndLossDataList.add(maxUsdLoss);
+        gainAndLossDataList.add(maxEurGain);
+        gainAndLossDataList.add(maxEurLoss);
+
+        return gainAndLossDataList;
     }
 
     public GainAndLossData findMaxLoss(List<CurrencyData> data, String currency) {
