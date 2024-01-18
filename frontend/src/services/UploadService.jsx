@@ -15,7 +15,7 @@ function UploadService() {
 		formData.append('file', file)
 
 		axios
-			.post('http://localhost:8080/api/upload', formData)
+			.post('http://localhost:8081/api/upload', formData)
 			.then(response => {
 				console.log('File uploaded successfully', response.data)
 			})
